@@ -13,7 +13,7 @@ const MovieDetail = () => {
             try {
                 // The route in backend is /api/movies/find/:id
                 // But the ID passed in URL might be the MongoDB _id.
-                const res = await axios.get(`http://localhost:5000/api/movies/find/${id}`);
+                const res = await axios.get(`/api/movies/find/${id}`);
                 setMovie(res.data);
             } catch (err) {
                 console.log(err);
@@ -34,7 +34,7 @@ const MovieDetail = () => {
                     width: '100%',
                     backgroundImage: movie.backdropPath
                         ? `linear-gradient(to bottom, rgba(0,0,0,0) 0%, #1a1a1a 100%), url(${movie.backdropPath.startsWith('/images')
-                            ? `http://localhost:5000${movie.backdropPath}`
+                            ? `${movie.backdropPath}`
                             : `https://image.tmdb.org/t/p/original${movie.backdropPath}`
                         })`
                         : 'none',
@@ -51,7 +51,7 @@ const MovieDetail = () => {
                             component="img"
                             src={movie.posterPath
                                 ? (movie.posterPath.startsWith('/images')
-                                    ? `http://localhost:5000${movie.posterPath}`
+                                    ? `${movie.posterPath}`
                                     : `https://image.tmdb.org/t/p/w500${movie.posterPath}`)
                                 : 'https://placehold.co/300x450'}
                             alt={movie.title}

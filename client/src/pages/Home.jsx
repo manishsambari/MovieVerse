@@ -20,23 +20,23 @@ const Home = () => {
         const fetchData = async () => {
             try {
                 // Fetch for Hero (Newest/Trending - just using general list for now)
-                const heroRes = await axios.get(`http://localhost:5000/api/movies?limit=5`);
+                const heroRes = await axios.get(`/api/movies?limit=5`);
                 setHeroMovies(heroRes.data.movies);
 
                 // Fetch Action
-                const actionRes = await axios.get(`http://localhost:5000/api/movies?category=Action&limit=10`);
+                const actionRes = await axios.get(`/api/movies?category=Action&limit=10`);
                 setActionMovies(actionRes.data.movies);
 
                 // Fetch Comedy
-                const comedyRes = await axios.get(`http://localhost:5000/api/movies?category=Comedy&limit=10`);
+                const comedyRes = await axios.get(`/api/movies?category=Comedy&limit=10`);
                 setComedyMovies(comedyRes.data.movies);
 
                 // Fetch Drama
-                const dramaRes = await axios.get(`http://localhost:5000/api/movies?category=Drama&limit=10`);
+                const dramaRes = await axios.get(`/api/movies?category=Drama&limit=10`);
                 setDramaMovies(dramaRes.data.movies);
 
                 // Fetch Top Rated (Sort by rating)
-                const topRes = await axios.get(`http://localhost:5000/api/movies/sorted?sort=rating`);
+                const topRes = await axios.get(`/api/movies/sorted?sort=rating`);
                 setTopRated(topRes.data.slice(0, 5)); // Top 5
             } catch (err) {
                 console.log(err);
@@ -89,7 +89,7 @@ const Home = () => {
                             <img
                                 src={movie.posterPath
                                     ? (movie.posterPath.startsWith('/images')
-                                        ? `http://localhost:5000${movie.posterPath}`
+                                        ? `${movie.posterPath}`
                                         : `https://image.tmdb.org/t/p/w300${movie.posterPath}`)
                                     : 'https://placehold.co/200x300'}
                                 alt={movie.title}
@@ -133,11 +133,11 @@ const Home = () => {
                         width: '100%',
                         backgroundImage: heroMovies[currentHeroIndex].backdropPath
                             ? `linear-gradient(to bottom, rgba(0,0,0,0) 50%, #141414 100%), linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 60%), url(${heroMovies[currentHeroIndex].backdropPath.startsWith('/images')
-                                ? `http://localhost:5000${heroMovies[currentHeroIndex].backdropPath}`
+                                ? `${heroMovies[currentHeroIndex].backdropPath}`
                                 : `https://image.tmdb.org/t/p/original${heroMovies[currentHeroIndex].backdropPath}`
                             })`
                             : `linear-gradient(to bottom, rgba(0,0,0,0) 0%, #141414 100%), url(${heroMovies[currentHeroIndex].posterPath && heroMovies[currentHeroIndex].posterPath.startsWith('/images')
-                                ? `http://localhost:5000${heroMovies[currentHeroIndex].posterPath}`
+                                ? `${heroMovies[currentHeroIndex].posterPath}`
                                 : `https://image.tmdb.org/t/p/original${heroMovies[currentHeroIndex].posterPath}`
                             })`,
                         backgroundSize: 'cover',
@@ -234,7 +234,7 @@ const Home = () => {
                                         <img
                                             src={movie.posterPath
                                                 ? (movie.posterPath.startsWith('/images')
-                                                    ? `http://localhost:5000${movie.posterPath}`
+                                                    ? `${movie.posterPath}`
                                                     : `https://image.tmdb.org/t/p/w200${movie.posterPath}`)
                                                 : 'https://placehold.co/100x150'}
                                             alt={movie.title}
