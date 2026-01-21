@@ -7,12 +7,10 @@ import { CssBaseline, ThemeProvider } from '@mui/material';
 import theme from './theme';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-    <React.StrictMode>
-        <AuthContextProvider>
-            <ThemeProvider theme={theme}>
-                <CssBaseline />
-                <App />
-            </ThemeProvider>
-        </AuthContextProvider>
-    </React.StrictMode>,
+    <AuthContextProvider>
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <App />
+        </ThemeProvider>
+    </AuthContextProvider>,
 )

@@ -12,20 +12,20 @@ const MovieSchema = new mongoose.Schema({
         type: Number,
     },
     releaseDate: {
-        type: String, // Storing as string or Date depending on TMDb format, string is often easier for display if no calcs needed
+        type: String,
     },
     duration: {
-        type: Number, // in minutes
+        type: Number,
     },
     tmdbId: {
         type: Number,
         unique: true,
     },
     posterPath: {
-        type: String, // /path/to/image.jpg
+        type: String,
     },
     backdropPath: {
-        type: String, // /path/to/backdrop.jpg
+        type: String,
     },
     genres: [{
         type: String,
@@ -42,7 +42,7 @@ const MovieSchema = new mongoose.Schema({
         image: String,
     }],
     trailerKey: {
-        type: String, // YouTube Video Key
+        type: String,
     },
 }, { timestamps: true });
 

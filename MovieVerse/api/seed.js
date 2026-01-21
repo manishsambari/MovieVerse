@@ -1,23 +1,42 @@
 const mongoose = require('mongoose');
 const axios = require('axios');
-const dotenv = require('dotenv');
-const Movie = require('../models/Movie');
-const User = require('../models/User');
+const Movie = require('../server/models/Movie');
+const User = require('../server/models/User');
 const bcrypt = require('bcryptjs');
 
-const path = require('path');
-dotenv.config({ path: path.join(__dirname, '../.env') });
+module.exports = async (req, res) => {
 
-const seedMovies = async () => {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ message: 'Method not allowed' });
+    }
+
+    const { secret } = req.body;
+
+
+    if (secret !== process.env.SEED_SECRET) {
+        return res.status(403).json({ message: 'Unauthorized' });
+    }
+
     try {
-        await mongoose.connect(process.env.MONGO_URI);
-        console.log('MongoDB Connected for Seeding');
+
+        if (mongoose.connection.readyState !== 1) {
+            await mongoose.connect(process.env.MONGO_URI);
+        }
+
+        const movieCount = await Movie.countDocuments();
+        if (movieCount > 0) {
+            return res.status(200).json({
+                message: 'Database already seeded',
+                movieCount
+            });
+        }
 
         const moviesSet = new Map();
         let page = 1;
         const totalMoviesNeeded = 250;
+        const fetchedMovies = [];
 
-        while (moviesSet.size < totalMoviesNeeded) {
+        while (moviesSet.size < totalMoviesNeeded && page <= 15) {
             const response = await axios.get(`https://api.themoviedb.org/3/movie/top_rated`, {
                 params: {
                     api_key: process.env.TMDB_API_KEY,
@@ -27,7 +46,6 @@ const seedMovies = async () => {
             });
 
             const results = response.data.results;
-
             if (!results.length) break;
 
             for (const movie of results) {
@@ -70,7 +88,8 @@ const seedMovies = async () => {
                         cast: cast,
                         trailerKey: trailer ? trailer.key : null
                     });
-                    process.stdout.write(`.`);
+
+                    fetchedMovies.push(details.title);
                 } catch (e) {
                     console.error(`Error fetching details for movie ${movie.id}:`, e.message);
                 }
@@ -80,7 +99,7 @@ const seedMovies = async () => {
 
         const movies = Array.from(moviesSet.values());
 
-        // Upsert movies to ensure images are added to existing ones
+        // Insert movies
         for (const movie of movies) {
             await Movie.findOneAndUpdate(
                 { tmdbId: movie.tmdbId },
@@ -101,15 +120,19 @@ const seedMovies = async () => {
                 role: 'admin'
             });
             await adminUser.save();
-            console.log('Admin user seeded (admin@gmail.com / adminpassword)');
         }
 
-        console.log(`\nSuccessfully seeded ${movies.length} movies!`);
-        process.exit();
-    } catch (err) {
-        console.error(err);
-        process.exit(1);
+        res.status(200).json({
+            message: 'Database seeded successfully!',
+            moviesSeeded: movies.length,
+            adminCreated: !adminExists
+        });
+
+    } catch (error) {
+        console.error('Seed error:', error);
+        res.status(500).json({
+            message: 'Error seeding database',
+            error: error.message
+        });
     }
 };
-
-seedMovies();

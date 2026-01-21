@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import { Container, TextField, Button, Grid, Card, CardMedia, CardContent, Typography, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,7 +13,7 @@ const Search = () => {
         if (e) e.preventDefault(); // Handle form submit or effect
         try {
             // If query is empty, we can fetch 'sorted' or just search with empty string (regex matches all)
-            const res = await axios.get(`http://localhost:5000/api/movies/search?q=${query}&sort=${sort}`);
+            const res = await api.get(`/movies/search?q=${query}&sort=${sort}`);
             setResults(res.data);
         } catch (err) {
             console.log(err);
@@ -80,7 +80,7 @@ const Search = () => {
                                     height="300"
                                     image={movie.posterPath
                                         ? (movie.posterPath.startsWith('/images')
-                                            ? `http://localhost:5000${movie.posterPath}`
+                                            ? `${movie.posterPath}`
                                             : `https://image.tmdb.org/t/p/w500${movie.posterPath}`)
                                         : `https://placehold.co/300x450?text=${movie.title}`}
                                     alt={movie.title}

@@ -4,18 +4,13 @@ import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import UserProfileDropdown from './UserProfileDropdown';
 
 export default function Navbar() {
-    const { user, dispatch } = useContext(AuthContext);
-    const navigate = useNavigate();
-
-    const handleLogout = () => {
-        dispatch({ type: "LOGOUT" });
-        navigate("/login");
-    };
+    const { user } = useContext(AuthContext);
 
     return (
         <Box sx={{ flexGrow: 1 }}>
@@ -31,13 +26,14 @@ export default function Navbar() {
                     <Button color="inherit" component={Link} to="/" sx={{ fontWeight: 'normal' }}>Home</Button>
                     <Button color="inherit" component={Link} to="/search" sx={{ fontWeight: 'normal' }}>Search</Button>
 
+
+
                     {user ? (
                         <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
                             {user.role === 'admin' && (
                                 <Button color="inherit" component={Link} to="/admin" sx={{ mr: 1 }}>Admin</Button>
                             )}
-                            <Typography variant="body2" sx={{ mx: 2, color: '#aaa' }}>{user.username}</Typography>
-                            <Button color="primary" variant="contained" size="small" onClick={handleLogout} sx={{ fontWeight: 'bold' }}>Logout</Button>
+                            <UserProfileDropdown />
                         </Box>
                     ) : (
                         <Box sx={{ ml: 2 }}>

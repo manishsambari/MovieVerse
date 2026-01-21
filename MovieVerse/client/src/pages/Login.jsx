@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Container, TextField, Button, Typography, Box, Alert } from '@mui/material';
@@ -16,7 +16,7 @@ const Login = () => {
         e.preventDefault();
         dispatch({ type: "LOGIN_START" });
         try {
-            const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
+            const res = await api.post("/auth/login", { email, password });
             dispatch({ type: "LOGIN_SUCCESS", payload: res.data });
             navigate("/");
         } catch (err) {

@@ -12,7 +12,7 @@ const movieRoutes = require('./routes/movies');
 
 const app = express();
 
-// Middleware
+// middleware
 app.use(express.json());
 app.use(cors());
 app.use(helmet({
@@ -20,28 +20,35 @@ app.use(helmet({
 }));
 app.use(morgan('common'));
 
-// Routes
-// Routes
+// routes
 app.use('/api/auth', authRoutes);
 app.use('/api/movies', movieRoutes);
+app.use('/api/users', require('./routes/users'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api', require('./routes/seed'));
+app.use('/api/watchlist', require('./routes/watchlist'));
 
-// Static Serve for Images
+// static for Images
 const path = require('path');
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
-// Database Connection
+// db Connection
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB Connected'))
     .catch((err) => console.log('MongoDB connection error:', err));
 
-// Global Error Handler
+// Error Handler
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: 'Something went wrong!', error: err.message });
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;

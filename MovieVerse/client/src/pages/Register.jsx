@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 import { Container, TextField, Button, Typography, Box, Alert } from '@mui/material';
 
@@ -15,7 +15,7 @@ const Register = () => {
         e.preventDefault();
         setError(false);
         try {
-            await axios.post("http://localhost:5000/api/auth/register", {
+            await api.post("/auth/register", {
                 username,
                 email,
                 password,

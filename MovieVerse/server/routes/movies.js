@@ -48,12 +48,12 @@ router.get('/find/:id', async (req, res) => {
     }
 });
 
-// GET ALL MOVIES (Pagination)
+// GET ALL MOVIES 
 router.get('/', async (req, res) => {
     const qNew = req.query.new;
     const qCategory = req.query.category;
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20; // Default limit 20
+    const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
 
     try {
