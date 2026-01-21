@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import StarIcon from '@mui/icons-material/Star';
+import WatchlistButton from '../components/WatchlistButton';
 
 const Home = () => {
     const [heroMovies, setHeroMovies] = useState([]);
@@ -90,6 +91,9 @@ const Home = () => {
                                 alt={movie.title}
                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
+                            <Box sx={{ position: 'absolute', top: 8, left: 8, zIndex: 1 }}>
+                                <WatchlistButton movieId={movie._id} size="small" />
+                            </Box>
                             <Box sx={{
                                 position: 'absolute',
                                 top: 0,

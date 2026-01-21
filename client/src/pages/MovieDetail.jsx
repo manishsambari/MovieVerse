@@ -1,12 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../utils/api';
 import { Container, Grid, Typography, Box, Chip, Button, Avatar, Paper } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+import { AuthContext } from '../context/AuthContext';
 
 const MovieDetail = () => {
     const { id } = useParams();
+    const { user, dispatch } = useContext(AuthContext);
     const [movie, setMovie] = useState(null);
+    const [inWatchlist, setInWatchlist] = useState(false);
 
     useEffect(() => {
         const fetchMovie = async () => {
@@ -20,6 +25,40 @@ const MovieDetail = () => {
         };
         fetchMovie();
     }, [id]);
+
+    useEffect(() => {
+        const checkWatchlist = async () => {
+            if (user) {
+                try {
+                    const res = await api.get('/watchlist');
+                    const isInWatchlist = res.data.some(m => m._id === id);
+                    setInWatchlist(isInWatchlist);
+                } catch (err) {
+                    console.error('Error checking watchlist:', err);
+                }
+            }
+        };
+        checkWatchlist();
+    }, [id, user]);
+
+    const handleWatchlistToggle = async () => {
+        if (!user) {
+            alert('Please login to add movies to your watchlist');
+            return;
+        }
+
+        try {
+            if (inWatchlist) {
+                await api.delete(`/watchlist/${id}`);
+                setInWatchlist(false);
+            } else {
+                await api.post(`/watchlist/${id}`);
+                setInWatchlist(true);
+            }
+        } catch (err) {
+            console.error('Error toggling watchlist:', err);
+        }
+    };
 
     if (!movie) return <Box sx={{ color: 'white', textAlign: 'center', mt: 10 }}>Loading...</Box>;
 
@@ -134,9 +173,31 @@ const MovieDetail = () => {
                             ))}
                         </Grid>
 
-                        {/* Trailer Button / Section */}
-                        {movie.trailerKey && (
-                            <Box sx={{ mt: 5 }}>
+                        {/* Action Buttons */}
+                        <Box sx={{ mt: 5, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                            {/* Watchlist Button */}
+                            <Button
+                                variant={inWatchlist ? "outlined" : "contained"}
+                                color={inWatchlist ? "error" : "primary"}
+                                startIcon={inWatchlist ? <RemoveIcon /> : <AddIcon />}
+                                onClick={handleWatchlistToggle}
+                                sx={{
+                                    fontWeight: 'bold',
+                                    px: 4,
+                                    py: 1.5,
+                                    borderRadius: '24px',
+                                    color: inWatchlist ? '#ff4444' : 'black',
+                                    borderColor: inWatchlist ? '#ff4444' : undefined,
+                                    '&:hover': {
+                                        borderColor: inWatchlist ? '#ff6666' : undefined,
+                                    }
+                                }}
+                            >
+                                {inWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                            </Button>
+
+                            {/* Trailer Button */}
+                            {movie.trailerKey && (
                                 <Button
                                     variant="contained"
                                     color="primary"
@@ -147,8 +208,8 @@ const MovieDetail = () => {
                                 >
                                     Watch Trailer
                                 </Button>
-                            </Box>
-                        )}
+                            )}
+                        </Box>
 
                     </Grid>
                 </Grid>

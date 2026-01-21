@@ -30,6 +30,9 @@ export default function Navbar() {
 
                     <Button color="inherit" component={Link} to="/" sx={{ fontWeight: 'normal' }}>Home</Button>
                     <Button color="inherit" component={Link} to="/search" sx={{ fontWeight: 'normal' }}>Search</Button>
+                    {user && (
+                        <Button color="inherit" component={Link} to="/profile" sx={{ fontWeight: 'normal' }}>Profile</Button>
+                    )}
 
                     {user ? (
                         <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>

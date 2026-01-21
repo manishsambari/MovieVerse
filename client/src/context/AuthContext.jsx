@@ -34,6 +34,14 @@ const AuthReducer = (state, action) => {
                 isFetching: false,
                 error: false,
             };
+        case "UPDATE_WATCHLIST":
+            return {
+                ...state,
+                user: {
+                    ...state.user,
+                    watchlist: action.payload,
+                },
+            };
         default:
             return state;
     }

@@ -6,6 +6,7 @@ import Navbar from "./components/Navbar";
 import Search from "./pages/Search";
 import MovieDetail from "./pages/MovieDetail";
 import AdminDashboard from "./pages/AdminDashboard";
+import Profile from "./pages/Profile";
 import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
 
@@ -27,8 +28,14 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
                 <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
+                <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
                 <Route path="/search" element={<Search />} />
                 <Route path="/movie/:id" element={<MovieDetail />} />
+                <Route path="/profile" element={
+                    <RequireAuth>
+                        <Profile />
+                    </RequireAuth>
+                } />
                 <Route path="/admin" element={
                     <RequireAdmin>
                         <AdminDashboard />

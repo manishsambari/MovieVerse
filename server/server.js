@@ -23,8 +23,10 @@ app.use(morgan('common'));
 // routes
 app.use('/api/auth', authRoutes);
 app.use('/api/movies', movieRoutes);
+app.use('/api/users', require('./routes/users'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api', require('./routes/seed'));
+app.use('/api/watchlist', require('./routes/watchlist'));
 
 // static for Images
 const path = require('path');
