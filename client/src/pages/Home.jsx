@@ -19,23 +19,18 @@ const Home = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch for Hero (Newest/Trending - just using general list for now)
                 const heroRes = await api.get(`/movies?limit=5`);
                 setHeroMovies(heroRes.data.movies);
 
-                // Fetch Action
                 const actionRes = await api.get(`/movies?category=Action&limit=10`);
                 setActionMovies(actionRes.data.movies);
 
-                // Fetch Comedy
                 const comedyRes = await api.get(`/movies?category=Comedy&limit=10`);
                 setComedyMovies(comedyRes.data.movies);
 
-                // Fetch Drama
                 const dramaRes = await api.get(`/movies?category=Drama&limit=10`);
                 setDramaMovies(dramaRes.data.movies);
 
-                // Fetch Top Rated (Sort by rating)
                 const topRes = await api.get(`/movies/sorted?sort=rating`);
                 setTopRated(topRes.data.slice(0, 5)); // Top 5
             } catch (err) {

@@ -11,8 +11,7 @@ const MovieDetail = () => {
     useEffect(() => {
         const fetchMovie = async () => {
             try {
-                // The route in backend is /api/movies/find/:id
-                // But the ID passed in URL might be the MongoDB _id.
+
                 const res = await api.get(`/movies/find/${id}`);
                 setMovie(res.data);
             } catch (err) {

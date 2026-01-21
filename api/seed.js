@@ -5,25 +5,24 @@ const User = require('../server/models/User');
 const bcrypt = require('bcryptjs');
 
 module.exports = async (req, res) => {
-    // Security: Only allow POST requests with a secret key
+
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method not allowed' });
     }
 
     const { secret } = req.body;
 
-    // Check for admin secret (set this in Vercel environment variables)
+
     if (secret !== process.env.SEED_SECRET) {
         return res.status(403).json({ message: 'Unauthorized' });
     }
 
     try {
-        // Connect to MongoDB
+
         if (mongoose.connection.readyState !== 1) {
             await mongoose.connect(process.env.MONGO_URI);
         }
 
-        // Check if already seeded
         const movieCount = await Movie.countDocuments();
         if (movieCount > 0) {
             return res.status(200).json({

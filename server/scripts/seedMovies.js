@@ -13,7 +13,7 @@ const seedMovies = async () => {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('MongoDB Connected for Seeding');
 
-        const moviesSet = new Map(); // Use Map to avoid duplicates by ID
+        const moviesSet = new Map();
         let page = 1;
         const totalMoviesNeeded = 250;
 
@@ -33,11 +33,6 @@ const seedMovies = async () => {
             for (const movie of results) {
                 if (moviesSet.size >= totalMoviesNeeded) break;
 
-                // Fetch full details for duration if needed, but top_rated list has basic info. 
-                // Duration (runtime) is in details endpoint /movie/{movie_id}.
-                // To minimize requests, we might skip duration or fetch individually. 
-                // Let's fetch individual details to get 'runtime'.
-
                 try {
                     const detailResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movie.id}`, {
                         params: {
@@ -51,7 +46,7 @@ const seedMovies = async () => {
                     const videos = details.videos;
 
                     const director = credits.crew.find(person => person.job === 'Director')?.name;
-                    const writers = credits.crew.filter(person => person.department === 'Writing').map(p => p.name).slice(0, 3); // Top 3 writers
+                    const writers = credits.crew.filter(person => person.department === 'Writing').map(p => p.name).slice(0, 3);
                     const cast = credits.cast.slice(0, 6).map(c => ({
                         name: c.name,
                         role: c.character,
@@ -75,7 +70,7 @@ const seedMovies = async () => {
                         cast: cast,
                         trailerKey: trailer ? trailer.key : null
                     });
-                    process.stdout.write(`.`); // progress indicator
+                    process.stdout.write(`.`);
                 } catch (e) {
                     console.error(`Error fetching details for movie ${movie.id}:`, e.message);
                 }

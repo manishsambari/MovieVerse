@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// Create axios instance with base URL from environment variable
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL || '/api',
     headers: {
@@ -8,7 +7,7 @@ const api = axios.create({
     }
 });
 
-// Add request interceptor to include auth token
+// request interceptor to include auth token
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -22,7 +21,7 @@ api.interceptors.request.use(
     }
 );
 
-// Add response interceptor for error handling
+// response interceptor for error handling
 api.interceptors.response.use(
     (response) => response,
     (error) => {

@@ -5,17 +5,15 @@ const Movie = require('../models/Movie');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
-// Protected seed endpoint - use a secret query parameter
+
 router.post('/seed', async (req, res) => {
     try {
         const { secret } = req.body;
 
-        // Simple protection - check for secret
         if (secret !== process.env.JWT_SECRET) {
             return res.status(403).json({ message: 'Unauthorized' });
         }
 
-        // Check if already seeded
         const movieCount = await Movie.countDocuments();
         if (movieCount > 0) {
             return res.json({
