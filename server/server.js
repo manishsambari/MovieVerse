@@ -25,6 +25,7 @@ app.use(morgan('common'));
 app.use('/api/auth', authRoutes);
 app.use('/api/movies', movieRoutes);
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api', require('./routes/seed'));
 
 // Static Serve for Images
 const path = require('path');
