@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 import { Container, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Typography, Box, Modal, TextField } from '@mui/material';
 
@@ -12,7 +12,7 @@ const AdminDashboard = () => {
     // Fetch movies
     const fetchMovies = async () => {
         try {
-            const res = await axios.get("/api/movies?limit=250"); // Get all for admin roughly
+            const res = await api.get("/movies?limit=250"); // Get all for admin roughly
             setMovies(res.data.movies || res.data); // Handle pagination response
         } catch (err) {
             console.log(err);
@@ -25,7 +25,7 @@ const AdminDashboard = () => {
 
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`/api/movies/${id}`, {
+            await api.delete(`/movies/${id}`, {
                 headers: { Authorization: `Bearer ${user.accessToken}` }
             });
             setMovies(movies.filter(m => m._id !== id));
@@ -44,7 +44,7 @@ const AdminDashboard = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post("/api/movies", formData, {
+            await api.post("/movies", formData, {
                 headers: { Authorization: `Bearer ${user.accessToken}` }
             });
             handleClose();
@@ -61,7 +61,7 @@ const AdminDashboard = () => {
         const data = new FormData();
         data.append("file", file);
         try {
-            const res = await axios.post("/api/upload", data);
+            const res = await api.post("/upload", data);
             // setFormData with the returned path
             setFormData(prev => ({ ...prev, [field]: res.data }));
         } catch (err) {

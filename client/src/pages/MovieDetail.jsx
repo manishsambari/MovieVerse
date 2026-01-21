@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import { Container, Grid, Typography, Box, Chip, Button, Avatar, Paper } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 
@@ -13,7 +13,7 @@ const MovieDetail = () => {
             try {
                 // The route in backend is /api/movies/find/:id
                 // But the ID passed in URL might be the MongoDB _id.
-                const res = await axios.get(`/api/movies/find/${id}`);
+                const res = await api.get(`/movies/find/${id}`);
                 setMovie(res.data);
             } catch (err) {
                 console.log(err);

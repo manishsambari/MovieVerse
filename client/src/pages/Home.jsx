@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import { Container, Grid, Card, CardMedia, CardContent, Typography, Box, Button, Chip, IconButton, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
@@ -20,23 +20,23 @@ const Home = () => {
         const fetchData = async () => {
             try {
                 // Fetch for Hero (Newest/Trending - just using general list for now)
-                const heroRes = await axios.get(`/api/movies?limit=5`);
+                const heroRes = await api.get(`/movies?limit=5`);
                 setHeroMovies(heroRes.data.movies);
 
                 // Fetch Action
-                const actionRes = await axios.get(`/api/movies?category=Action&limit=10`);
+                const actionRes = await api.get(`/movies?category=Action&limit=10`);
                 setActionMovies(actionRes.data.movies);
 
                 // Fetch Comedy
-                const comedyRes = await axios.get(`/api/movies?category=Comedy&limit=10`);
+                const comedyRes = await api.get(`/movies?category=Comedy&limit=10`);
                 setComedyMovies(comedyRes.data.movies);
 
                 // Fetch Drama
-                const dramaRes = await axios.get(`/api/movies?category=Drama&limit=10`);
+                const dramaRes = await api.get(`/movies?category=Drama&limit=10`);
                 setDramaMovies(dramaRes.data.movies);
 
                 // Fetch Top Rated (Sort by rating)
-                const topRes = await axios.get(`/api/movies/sorted?sort=rating`);
+                const topRes = await api.get(`/movies/sorted?sort=rating`);
                 setTopRated(topRes.data.slice(0, 5)); // Top 5
             } catch (err) {
                 console.log(err);
