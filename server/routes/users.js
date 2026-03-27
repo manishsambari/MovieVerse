@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const User = require('../models/User');
-const verify = require('../middleware/verify');
+const verify = require('../middleware/auth');
 
 // GET user's watchlist
 router.get('/watchlist', verify, async (req, res) => {
