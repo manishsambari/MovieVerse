@@ -6,11 +6,62 @@ const morgan = require('morgan');
 const dotenv = require('dotenv');
 
 dotenv.config();
+mongoose.set('bufferCommands', false);
 
 const authRoutes = require('./routes/auth');
 const movieRoutes = require('./routes/movies');
+const userRoutes = require('./routes/users');
+const uploadRoutes = require('./routes/upload');
+const seedRoutes = require('./routes/seed');
+const watchlistRoutes = require('./routes/watchlist');
 
 const app = express();
+const PORT = process.env.PORT || 5000;
+const DB_READY_STATE = 1;
+
+const getDatabaseStatus = () => {
+    const states = {
+        0: 'disconnected',
+        1: 'connected',
+        2: 'connecting',
+        3: 'disconnecting',
+    };
+
+    return states[mongoose.connection.readyState] || 'unknown';
+};
+
+const requireDatabaseConnection = (req, res, next) => {
+    if (mongoose.connection.readyState === DB_READY_STATE) {
+        return next();
+    }
+
+    return res.status(503).json({
+        message: 'Database unavailable. Please try again in a moment.',
+        databaseStatus: getDatabaseStatus(),
+    });
+};
+
+const validateEnvironment = () => {
+    const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET'];
+    const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
+
+    if (missingEnvVars.length > 0) {
+        throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+    }
+};
+
+const startServer = async () => {
+    validateEnvironment();
+
+    await mongoose.connect(process.env.MONGO_URI, {
+        serverSelectionTimeoutMS: 10000,
+    });
+
+    return app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+        console.log('MongoDB Connected');
+    });
+};
 
 // middleware
 app.use(express.json());
@@ -20,22 +71,35 @@ app.use(helmet({
 }));
 app.use(morgan('common'));
 
+app.get('/api/health', (req, res) => {
+    const databaseStatus = getDatabaseStatus();
+    const isHealthy = mongoose.connection.readyState === DB_READY_STATE;
+
+    res.status(isHealthy ? 200 : 503).json({
+        status: isHealthy ? 'ok' : 'degraded',
+        databaseStatus,
+    });
+});
+
 // routes
-app.use('/api/auth', authRoutes);
-app.use('/api/movies', movieRoutes);
-app.use('/api/users', require('./routes/users'));
-app.use('/api/upload', require('./routes/upload'));
-app.use('/api', require('./routes/seed'));
-app.use('/api/watchlist', require('./routes/watchlist'));
+app.use('/api/auth', requireDatabaseConnection, authRoutes);
+app.use('/api/movies', requireDatabaseConnection, movieRoutes);
+app.use('/api/users', requireDatabaseConnection, userRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api', requireDatabaseConnection, seedRoutes);
+app.use('/api/watchlist', requireDatabaseConnection, watchlistRoutes);
 
 // static for Images
 const path = require('path');
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
-// db Connection
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('MongoDB Connected'))
-    .catch((err) => console.log('MongoDB connection error:', err));
+mongoose.connection.on('error', (err) => {
+    console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.warn('MongoDB disconnected');
+});
 
 // Error Handler
 app.use((err, req, res, next) => {
@@ -43,12 +107,12 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: 'Something went wrong!', error: err.message });
 });
 
-const PORT = process.env.PORT || 5000;
-
 if (require.main === module) {
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+    startServer().catch((err) => {
+        console.error('Server startup failed:', err);
+        process.exit(1);
     });
 }
 
 module.exports = app;
+module.exports.startServer = startServer;
