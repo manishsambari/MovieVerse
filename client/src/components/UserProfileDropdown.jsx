@@ -42,6 +42,8 @@ const UserProfileDropdown = () => {
 
     const handleLogout = () => {
         handleClose();
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         dispatch({ type: "LOGOUT" });
         navigate("/login");
     };
