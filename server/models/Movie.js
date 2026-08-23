@@ -44,6 +44,31 @@ const MovieSchema = new mongoose.Schema({
     trailerKey: {
         type: String,
     },
+    reviews: [{
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+        },
+        username: {
+            type: String,
+            required: true,
+        },
+        rating: {
+            type: Number,
+            required: true,
+            min: 1,
+            max: 10,
+        },
+        comment: {
+            type: String,
+            required: true,
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now,
+        }
+    }],
 }, { timestamps: true });
 
 module.exports = mongoose.model('Movie', MovieSchema);

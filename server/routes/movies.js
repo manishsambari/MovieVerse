@@ -81,11 +81,29 @@ router.get('/', async (req, res) => {
     }
 });
 
-// SEARCH MOVIES
+// GET RANDOM MOVIE (Surprise Me)
+router.get('/random', async (req, res) => {
+    try {
+        const count = await Movie.countDocuments();
+        if (count === 0) {
+            return res.status(404).json({ message: 'No movies available' });
+        }
+        const random = Math.floor(Math.random() * count);
+        const movie = await Movie.findOne().skip(random);
+        res.status(200).json(movie);
+    } catch (err) {
+        console.error("Random Movie Error:", err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// SEARCH MOVIES (With Advanced Filtering)
 router.get('/search', async (req, res) => {
     const query = req.query.q ? req.query.q.trim() : '';
     const sortBy = req.query.sort; // rating, releaseDate, duration, name
     const category = req.query.category;
+    const minRating = parseFloat(req.query.minRating);
+    const decade = req.query.decade;
 
     let sortOption = {};
     if (sortBy === 'rating') sortOption = { rating: -1 };
@@ -106,6 +124,16 @@ router.get('/search', async (req, res) => {
         }
         if (category && category !== 'All') {
             filter.genres = { $in: [category] };
+        }
+        if (!isNaN(minRating) && minRating > 0) {
+            filter.rating = { $gte: minRating };
+        }
+        if (decade) {
+            if (decade === '2020s') filter.releaseDate = { $gte: '2020-01-01', $lte: '2029-12-31' };
+            else if (decade === '2010s') filter.releaseDate = { $gte: '2010-01-01', $lte: '2019-12-31' };
+            else if (decade === '2000s') filter.releaseDate = { $gte: '2000-01-01', $lte: '2009-12-31' };
+            else if (decade === '1990s') filter.releaseDate = { $gte: '1990-01-01', $lte: '1999-12-31' };
+            else if (decade === 'classic') filter.releaseDate = { $lt: '1990-01-01' };
         }
 
         const movies = await Movie.find(filter).sort(sortOption);
@@ -135,5 +163,73 @@ router.get('/sorted', async (req, res) => {
     }
 });
 
+// ADD / UPDATE REVIEW (Authenticated users)
+router.post('/:id/reviews', verifyToken, async (req, res) => {
+    const { rating, comment } = req.body;
+    if (!rating || !comment) {
+        return res.status(400).json({ message: 'Rating and comment are required' });
+    }
+
+    try {
+        const movie = await Movie.findById(req.params.id);
+        if (!movie) {
+            return res.status(404).json({ message: 'Movie not found' });
+        }
+
+        // Check if user already reviewed
+        const existingIndex = movie.reviews.findIndex(
+            r => r.user.toString() === req.user.id.toString()
+        );
+
+        const newReview = {
+            user: req.user.id,
+            username: req.body.username || 'Anonymous User',
+            rating: Number(rating),
+            comment: comment.trim(),
+            createdAt: new Date(),
+        };
+
+        if (existingIndex > -1) {
+            movie.reviews[existingIndex] = newReview;
+        } else {
+            movie.reviews.unshift(newReview);
+        }
+
+        await movie.save();
+        res.status(200).json({ message: 'Review saved successfully', reviews: movie.reviews });
+    } catch (err) {
+        console.error("Review save error:", err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// DELETE REVIEW (User who created it or Admin)
+router.delete('/:id/reviews/:reviewId', verifyToken, async (req, res) => {
+    try {
+        const movie = await Movie.findById(req.params.id);
+        if (!movie) {
+            return res.status(404).json({ message: 'Movie not found' });
+        }
+
+        const review = movie.reviews.id(req.params.reviewId);
+        if (!review) {
+            return res.status(404).json({ message: 'Review not found' });
+        }
+
+        // Check ownership or admin
+        if (review.user.toString() !== req.user.id.toString() && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'You can only delete your own review' });
+        }
+
+        movie.reviews.pull({ _id: req.params.reviewId });
+        await movie.save();
+
+        res.status(200).json({ message: 'Review removed', reviews: movie.reviews });
+    } catch (err) {
+        console.error("Review delete error:", err);
+        res.status(500).json({ message: err.message });
+    }
+});
 
 module.exports = router;
+
