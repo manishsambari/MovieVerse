@@ -16,9 +16,10 @@ import {
     Badge,
     Divider,
     useMediaQuery,
-    useTheme
+    useTheme,
+    Tooltip
 } from '@mui/material';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import MovieFilterIcon from '@mui/icons-material/MovieFilter';
 import HomeIcon from '@mui/icons-material/Home';
 import SearchIcon from '@mui/icons-material/Search';
@@ -28,18 +29,22 @@ import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import LoginIcon from '@mui/icons-material/Login';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import CasinoIcon from '@mui/icons-material/Casino';
 import { AuthContext } from '../context/AuthContext';
 import { WatchlistContext } from '../context/WatchlistContext';
 import UserProfileDropdown from './UserProfileDropdown';
+import SurpriseMeModal from './SurpriseMeModal';
+import SearchDialog from './SearchDialog';
 
 export default function Navbar() {
     const { user } = useContext(AuthContext);
     const { watchlist } = useContext(WatchlistContext);
     const location = useLocation();
-    const navigate = useNavigate();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [surpriseOpen, setSurpriseOpen] = useState(false);
+    const [searchDialogOpen, setSearchDialogOpen] = useState(false);
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
@@ -61,7 +66,7 @@ export default function Navbar() {
             <AppBar
                 position="fixed"
                 sx={{
-                    bgcolor: 'rgba(12, 13, 18, 0.82)',
+                    bgcolor: 'rgba(12, 13, 18, 0.85)',
                     backdropFilter: 'blur(16px)',
                     borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                     zIndex: (theme) => theme.zIndex.drawer + 1,
@@ -167,13 +172,72 @@ export default function Navbar() {
                                         {link.label}
                                     </Button>
                                 ))}
+
+                                {/* Surprise Me button */}
+                                <Button
+                                    onClick={() => setSurpriseOpen(true)}
+                                    startIcon={<CasinoIcon sx={{ color: '#f5c518' }} />}
+                                    sx={{
+                                        color: '#fff',
+                                        fontWeight: 600,
+                                        fontSize: '0.9rem',
+                                        px: 2,
+                                        py: 0.8,
+                                        borderRadius: '8px',
+                                        bgcolor: 'rgba(245, 197, 24, 0.08)',
+                                        border: '1px solid rgba(245, 197, 24, 0.25)',
+                                        '&:hover': { bgcolor: 'rgba(245, 197, 24, 0.18)', borderColor: '#f5c518' }
+                                    }}
+                                >
+                                    Surprise Me
+                                </Button>
                             </Box>
                         )}
 
                         <Box sx={{ flexGrow: isMobile ? 1 : 0 }} />
 
-                        {/* Right Section: Watchlist, Admin & Auth */}
+                        {/* Right Section: Quick Search, Watchlist, Admin & Auth */}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 } }}>
+                            {/* Quick Search Shortcut Button */}
+                            <Tooltip title="Quick Search (Ctrl + K)">
+                                <Button
+                                    onClick={() => setSearchDialogOpen(true)}
+                                    startIcon={<SearchIcon sx={{ color: '#f5c518', fontSize: 20 }} />}
+                                    sx={{
+                                        bgcolor: 'rgba(255, 255, 255, 0.05)',
+                                        color: 'rgba(255, 255, 255, 0.75)',
+                                        borderRadius: '50px',
+                                        px: { xs: 1.2, sm: 2 },
+                                        py: 0.7,
+                                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                        minWidth: { xs: 'auto', sm: 140 },
+                                        '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.1)', borderColor: 'rgba(245, 197, 24, 0.4)' }
+                                    }}
+                                >
+                                    <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' }, fontSize: '0.85rem' }}>
+                                        Search...
+                                    </Box>
+                                    <Box
+                                        component="span"
+                                        sx={{
+                                            display: { xs: 'none', md: 'inline-block' },
+                                            bgcolor: 'rgba(255, 255, 255, 0.1)',
+                                            px: 0.8,
+                                            py: 0.2,
+                                            borderRadius: 1,
+                                            fontSize: '0.68rem',
+                                            fontWeight: 700,
+                                            color: 'rgba(255, 255, 255, 0.5)'
+                                        }}
+                                    >
+                                        ⌘K
+                                    </Box>
+                                </Button>
+                            </Tooltip>
+
                             {user ? (
                                 <>
                                     {/* Watchlist Quick Button */}
@@ -319,6 +383,19 @@ export default function Navbar() {
                         </ListItemButton>
                     </ListItem>
 
+                    <ListItem disablePadding sx={{ mb: 1 }}>
+                        <ListItemButton
+                            onClick={() => {
+                                handleDrawerToggle();
+                                setSurpriseOpen(true);
+                            }}
+                            sx={{ borderRadius: 2 }}
+                        >
+                            <ListItemIcon sx={{ color: '#f5c518' }}><CasinoIcon /></ListItemIcon>
+                            <ListItemText primary="Surprise Me 🎲" />
+                        </ListItemButton>
+                    </ListItem>
+
                     {user && (
                         <ListItem disablePadding sx={{ mb: 1 }}>
                             <ListItemButton
@@ -388,6 +465,12 @@ export default function Navbar() {
                     </Box>
                 )}
             </Drawer>
+
+            {/* Surprise Me Modal */}
+            <SurpriseMeModal open={surpriseOpen} onClose={() => setSurpriseOpen(false)} />
+
+            {/* Quick Search Dialog Palette (Ctrl + K) */}
+            <SearchDialog open={searchDialogOpen} onClose={() => setSearchDialogOpen(false)} />
 
             {/* Spacer for fixed Navbar */}
             <Toolbar sx={{ minHeight: { xs: 64, md: 72 } }} />
