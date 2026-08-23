@@ -207,6 +207,22 @@ const AdminDashboard = () => {
         }
     };
 
+    const [seeding, setSeeding] = useState(false);
+
+    const handleSeedMovies = async () => {
+        setSeeding(true);
+        try {
+            const res = await api.post('/seed?force=true');
+            setToast({ open: true, message: res.data.message || 'Movies seeded successfully!', severity: 'success' });
+            fetchMovies();
+        } catch (err) {
+            console.error('Seed error:', err);
+            setToast({ open: true, message: 'Failed to seed movies', severity: 'error' });
+        } finally {
+            setSeeding(false);
+        }
+    };
+
     return (
         <Container maxWidth="xl" sx={{ pt: 4, pb: 10 }}>
             {/* Header & Stats Banner */}
@@ -225,22 +241,40 @@ const AdminDashboard = () => {
                     </Typography>
                 </Box>
 
-                <Button
-                    variant="contained"
-                    color="primary"
-                    size="large"
-                    startIcon={<AddIcon />}
-                    onClick={handleOpenAdd}
-                    sx={{
-                        fontWeight: 800,
-                        px: 3,
-                        py: 1.2,
-                        borderRadius: '50px',
-                        boxShadow: '0 0 20px rgba(245, 197, 24, 0.4)'
-                    }}
-                >
-                    Add New Movie
-                </Button>
+                <Stack direction="row" spacing={2}>
+                    <Button
+                        variant="outlined"
+                        onClick={handleSeedMovies}
+                        disabled={seeding}
+                        startIcon={<MovieIcon />}
+                        sx={{
+                            borderColor: 'rgba(245, 197, 24, 0.5)',
+                            color: '#f5c518',
+                            fontWeight: 700,
+                            borderRadius: '50px',
+                            px: 2.5,
+                            '&:hover': { bgcolor: 'rgba(245, 197, 24, 0.1)', borderColor: '#f5c518' }
+                        }}
+                    >
+                        {seeding ? 'Seeding Movies...' : 'Seed Catalog'}
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        size="large"
+                        startIcon={<AddIcon />}
+                        onClick={handleOpenAdd}
+                        sx={{
+                            fontWeight: 800,
+                            px: 3,
+                            py: 1.2,
+                            borderRadius: '50px',
+                            boxShadow: '0 0 20px rgba(245, 197, 24, 0.4)'
+                        }}
+                    >
+                        Add New Movie
+                    </Button>
+                </Stack>
             </Box>
 
             {/* Quick Stat Cards */}
