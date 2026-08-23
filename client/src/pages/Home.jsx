@@ -284,6 +284,7 @@ const Home = () => {
     const [comedyMovies, setComedyMovies] = useState([]);
     const [dramaMovies, setDramaMovies] = useState([]);
     const [topRated, setTopRated] = useState([]);
+    const [recentlyViewed, setRecentlyViewed] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
@@ -291,6 +292,14 @@ const Home = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
+        // Load recently viewed from storage
+        try {
+            const stored = JSON.parse(localStorage.getItem('recently_viewed')) || [];
+            setRecentlyViewed(stored);
+        } catch {
+            setRecentlyViewed([]);
+        }
+
         const fetchData = async () => {
             setLoading(true);
             try {
@@ -602,6 +611,14 @@ const Home = () => {
                             category="All"
                             loading={loading}
                         />
+
+                        {recentlyViewed.length > 0 && (
+                            <MovieSection
+                                title="🕒 Continue Exploring (Recently Viewed)"
+                                movies={recentlyViewed}
+                                loading={false}
+                            />
+                        )}
 
                         <MovieSection
                             title="⚡ Action & Adrenaline"

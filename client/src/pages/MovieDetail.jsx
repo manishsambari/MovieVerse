@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api, { getPosterUrl, getBackdropUrl } from '../utils/api';
+import { AuthContext } from '../context/AuthContext';
 import {
     Container,
     Grid,
@@ -18,7 +19,9 @@ import {
     Snackbar,
     Alert,
     Stack,
-    Divider
+    Divider,
+    TextField,
+    Rating
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StarIcon from '@mui/icons-material/Star';
@@ -28,16 +31,27 @@ import ShareIcon from '@mui/icons-material/Share';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import MovieIcon from '@mui/icons-material/Movie';
+import RateReviewIcon from '@mui/icons-material/RateReview';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import WatchlistButton from '../components/WatchlistButton';
 
 const MovieDetail = () => {
     const { id } = useParams();
+    const { user } = useContext(AuthContext);
     const navigate = useNavigate();
+
     const [movie, setMovie] = useState(null);
     const [similarMovies, setSimilarMovies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [trailerOpen, setTrailerOpen] = useState(false);
     const [shareToast, setShareToast] = useState(false);
+
+    // Reviews state
+    const [reviews, setReviews] = useState([]);
+    const [userRating, setUserRating] = useState(8);
+    const [userComment, setUserComment] = useState('');
+    const [submittingReview, setSubmittingReview] = useState(false);
+    const [reviewToast, setReviewToast] = useState({ open: false, message: '', severity: 'success' });
 
     useEffect(() => {
         const fetchMovie = async () => {
@@ -46,6 +60,29 @@ const MovieDetail = () => {
                 const res = await api.get(`/movies/find/${id}`);
                 const movieData = res.data;
                 setMovie(movieData);
+                setReviews(movieData.reviews || []);
+
+                // Save to recently viewed
+                if (movieData) {
+                    try {
+                        const history = JSON.parse(localStorage.getItem('recently_viewed')) || [];
+                        const filtered = history.filter(m => m._id !== movieData._id);
+                        const updated = [
+                            {
+                                _id: movieData._id,
+                                title: movieData.title,
+                                posterPath: movieData.posterPath,
+                                rating: movieData.rating,
+                                releaseDate: movieData.releaseDate,
+                                duration: movieData.duration
+                            },
+                            ...filtered
+                        ].slice(0, 10);
+                        localStorage.setItem('recently_viewed', JSON.stringify(updated));
+                    } catch {
+                        // ignore storage errors
+                    }
+                }
 
                 // Fetch similar movies based on primary genre
                 if (movieData?.genres && movieData.genres.length > 0) {
@@ -69,6 +106,47 @@ const MovieDetail = () => {
         if (navigator.clipboard) {
             navigator.clipboard.writeText(window.location.href);
             setShareToast(true);
+        }
+    };
+
+    const handleReviewSubmit = async (e) => {
+        e.preventDefault();
+        if (!user) {
+            setReviewToast({ open: true, message: 'Please login to submit a review', severity: 'info' });
+            return;
+        }
+
+        if (!userComment.trim()) {
+            setReviewToast({ open: true, message: 'Please write a review comment', severity: 'warning' });
+            return;
+        }
+
+        setSubmittingReview(true);
+        try {
+            const res = await api.post(`/movies/${id}/reviews`, {
+                rating: userRating,
+                comment: userComment,
+                username: user.username
+            });
+            setReviews(res.data.reviews || []);
+            setUserComment('');
+            setReviewToast({ open: true, message: 'Your review was published!', severity: 'success' });
+        } catch (err) {
+            console.error('Review submit error:', err);
+            setReviewToast({ open: true, message: err.response?.data?.message || 'Failed to submit review', severity: 'error' });
+        } finally {
+            setSubmittingReview(false);
+        }
+    };
+
+    const handleDeleteReview = async (reviewId) => {
+        try {
+            const res = await api.delete(`/movies/${id}/reviews/${reviewId}`);
+            setReviews(res.data.reviews || []);
+            setReviewToast({ open: true, message: 'Review removed', severity: 'info' });
+        } catch (err) {
+            console.error('Delete review error:', err);
+            setReviewToast({ open: true, message: 'Failed to delete review', severity: 'error' });
         }
     };
 
@@ -365,6 +443,153 @@ const MovieDetail = () => {
                     </Grid>
                 </Grid>
 
+                {/* Community Reviews Section */}
+                <Box sx={{ mt: 6 }}>
+                    <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.08)', mb: 4 }} />
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Box sx={{ width: 4, height: 24, bgcolor: '#f5c518', borderRadius: '2px', boxShadow: '0 0 10px #f5c518' }} />
+                            <Typography variant="h5" sx={{ fontWeight: 800, color: '#fff' }}>
+                                Community Reviews ({reviews.length})
+                            </Typography>
+                        </Box>
+                    </Box>
+
+                    {/* Review Write Form */}
+                    <Paper
+                        sx={{
+                            p: 3,
+                            mb: 4,
+                            bgcolor: '#13151f',
+                            borderRadius: 3,
+                            border: '1px solid rgba(255, 255, 255, 0.08)'
+                        }}
+                    >
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#fff', mb: 2 }}>
+                            {user ? 'Leave Your Review & Rating' : 'Sign In to Review This Movie'}
+                        </Typography>
+
+                        {user ? (
+                            <Box component="form" onSubmit={handleReviewSubmit}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+                                        Your Rating:
+                                    </Typography>
+                                    <Rating
+                                        value={userRating / 2}
+                                        precision={0.5}
+                                        onChange={(e, val) => setUserRating((val || 1) * 2)}
+                                        sx={{ color: '#f5c518' }}
+                                    />
+                                    <Typography variant="body2" sx={{ color: '#f5c518', fontWeight: 800 }}>
+                                        {userRating} / 10
+                                    </Typography>
+                                </Box>
+
+                                <TextField
+                                    fullWidth
+                                    multiline
+                                    rows={3}
+                                    placeholder="What did you think of the acting, direction, and plot?"
+                                    value={userComment}
+                                    onChange={(e) => setUserComment(e.target.value)}
+                                    sx={{
+                                        mb: 2,
+                                        '& .MuiOutlinedInput-root': {
+                                            bgcolor: 'rgba(255, 255, 255, 0.03)',
+                                            borderRadius: 2
+                                        }
+                                    }}
+                                />
+
+                                <Button
+                                    type="submit"
+                                    variant="contained"
+                                    color="primary"
+                                    disabled={submittingReview}
+                                    startIcon={<RateReviewIcon />}
+                                    sx={{ fontWeight: 800, px: 3, py: 1, borderRadius: '50px' }}
+                                >
+                                    {submittingReview ? 'Posting...' : 'Submit Review'}
+                                </Button>
+                            </Box>
+                        ) : (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                                    Join the discussion and share your thoughts with fellow movie lovers.
+                                </Typography>
+                                <Button
+                                    variant="outlined"
+                                    component={Link}
+                                    to="/login"
+                                    sx={{ color: '#f5c518', borderColor: 'rgba(245,197,24,0.4)', borderRadius: '50px' }}
+                                >
+                                    Sign In
+                                </Button>
+                            </Box>
+                        )}
+                    </Paper>
+
+                    {/* Reviews List */}
+                    <Stack spacing={2}>
+                        {reviews.length > 0 ? (
+                            reviews.map((rev) => (
+                                <Paper
+                                    key={rev._id || Math.random()}
+                                    sx={{
+                                        p: 2.5,
+                                        bgcolor: '#13151f',
+                                        borderRadius: 2.5,
+                                        border: '1px solid rgba(255, 255, 255, 0.06)'
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                            <Avatar sx={{ bgcolor: '#f5c518', color: '#000', fontWeight: 800, width: 36, height: 36 }}>
+                                                {rev.username?.charAt(0).toUpperCase() || 'U'}
+                                            </Avatar>
+                                            <Box>
+                                                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#fff' }}>
+                                                    {rev.username}
+                                                </Typography>
+                                                <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.4)' }}>
+                                                    {new Date(rev.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, bgcolor: 'rgba(245, 197, 24, 0.12)', px: 1, py: 0.3, borderRadius: 1.5 }}>
+                                                <StarIcon sx={{ color: '#f5c518', fontSize: 16 }} />
+                                                <Typography variant="body2" sx={{ fontWeight: 800, color: '#f5c518' }}>
+                                                    {rev.rating} / 10
+                                                </Typography>
+                                            </Box>
+
+                                            {(user?._id === rev.user || user?.id === rev.user || user?.role === 'admin') && (
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => handleDeleteReview(rev._id)}
+                                                    sx={{ color: 'rgba(255, 68, 68, 0.7)', '&:hover': { color: '#ff4444' } }}
+                                                >
+                                                    <DeleteOutlineIcon fontSize="small" />
+                                                </IconButton>
+                                            )}
+                                        </Box>
+                                    </Box>
+                                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.85)', lineHeight: 1.6 }}>
+                                        {rev.comment}
+                                    </Typography>
+                                </Paper>
+                            ))
+                        ) : (
+                            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)', py: 2 }}>
+                                No reviews yet. Be the first to review this movie!
+                            </Typography>
+                        )}
+                    </Stack>
+                </Box>
+
                 {/* Similar / Recommended Movies */}
                 {similarMovies.length > 0 && (
                     <Box sx={{ mt: 8 }}>
@@ -454,6 +679,27 @@ const MovieDetail = () => {
                     )}
                 </DialogContent>
             </Dialog>
+
+            {/* Review feedback toast */}
+            <Snackbar
+                open={reviewToast.open}
+                autoHideDuration={3000}
+                onClose={() => setReviewToast(prev => ({ ...prev, open: false }))}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert
+                    onClose={() => setReviewToast(prev => ({ ...prev, open: false }))}
+                    severity={reviewToast.severity}
+                    variant="filled"
+                    sx={{
+                        fontWeight: 600,
+                        bgcolor: reviewToast.severity === 'success' ? '#f5c518' : undefined,
+                        color: reviewToast.severity === 'success' ? '#000' : undefined
+                    }}
+                >
+                    {reviewToast.message}
+                </Alert>
+            </Snackbar>
 
             {/* Share Confirmation Toast */}
             <Snackbar
