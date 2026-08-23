@@ -88,13 +88,26 @@ app.get('/', (req, res) => {
     });
 });
 
-app.get('/api/health', (req, res) => {
-    const databaseStatus = getDatabaseStatus();
-    const isHealthy = mongoose.connection.readyState === DB_READY_STATE;
+app.get('/api/health', async (req, res) => {
+    const isConnected = mongoose.connection.readyState === DB_READY_STATE;
+    let pingOk = false;
+
+    if (isConnected && mongoose.connection.db) {
+        try {
+            await mongoose.connection.db.admin().ping();
+            pingOk = true;
+        } catch (err) {
+            console.error('Health DB ping error:', err.message);
+        }
+    }
+
+    const isHealthy = isConnected && pingOk;
 
     res.status(isHealthy ? 200 : 503).json({
         status: isHealthy ? 'ok' : 'degraded',
-        databaseStatus,
+        databaseStatus: getDatabaseStatus(),
+        databasePing: pingOk ? 'successful' : 'failed',
+        timestamp: new Date().toISOString()
     });
 });
 
