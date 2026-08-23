@@ -71,6 +71,23 @@ app.use(helmet({
 }));
 app.use(morgan('common'));
 
+app.get('/', (req, res) => {
+    const isHealthy = mongoose.connection.readyState === DB_READY_STATE;
+    res.status(200).json({
+        name: 'MovieVerse API',
+        version: '1.0.0',
+        status: isHealthy ? 'online' : 'connecting',
+        database: getDatabaseStatus(),
+        endpoints: {
+            health: '/api/health',
+            movies: '/api/movies',
+            search: '/api/movies/search?q=...',
+            auth: '/api/auth',
+            watchlist: '/api/watchlist',
+        }
+    });
+});
+
 app.get('/api/health', (req, res) => {
     const databaseStatus = getDatabaseStatus();
     const isHealthy = mongoose.connection.readyState === DB_READY_STATE;

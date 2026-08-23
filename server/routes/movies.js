@@ -67,12 +67,13 @@ router.get('/', async (req, res) => {
             .limit(limit)
             .sort({ createdAt: -1 });
 
-        const total = await Movie.countDocuments();
+        const total = await Movie.countDocuments(filter);
 
         res.status(200).json({
             movies,
             totalPages: Math.ceil(total / limit),
-            currentPage: page
+            currentPage: page,
+            totalMovies: total
         });
     } catch (err) {
         console.error("Get Movies Error:", err);
@@ -82,23 +83,32 @@ router.get('/', async (req, res) => {
 
 // SEARCH MOVIES
 router.get('/search', async (req, res) => {
-    const query = req.query.q;
+    const query = req.query.q ? req.query.q.trim() : '';
     const sortBy = req.query.sort; // rating, releaseDate, duration, name
+    const category = req.query.category;
 
     let sortOption = {};
     if (sortBy === 'rating') sortOption = { rating: -1 };
     else if (sortBy === 'releaseDate') sortOption = { releaseDate: -1 };
     else if (sortBy === 'duration') sortOption = { duration: 1 };
     else if (sortBy === 'name') sortOption = { title: 1 };
-    else sortOption = { createdAt: -1 };
+    else sortOption = { rating: -1, createdAt: -1 };
 
     try {
-        const movies = await Movie.find({
-            $or: [
+        let filter = {};
+        if (query) {
+            filter.$or = [
                 { title: { $regex: query, $options: 'i' } },
-                { description: { $regex: query, $options: 'i' } }
-            ]
-        }).sort(sortOption);
+                { description: { $regex: query, $options: 'i' } },
+                { director: { $regex: query, $options: 'i' } },
+                { genres: { $regex: query, $options: 'i' } }
+            ];
+        }
+        if (category && category !== 'All') {
+            filter.genres = { $in: [category] };
+        }
+
+        const movies = await Movie.find(filter).sort(sortOption);
         res.status(200).json(movies);
     } catch (err) {
         console.error("Search Error:", err);
